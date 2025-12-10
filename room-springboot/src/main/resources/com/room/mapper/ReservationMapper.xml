@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.room.mapper.ReservationMapper">
+    <resultMap id="BaseResultMap" type="com.room.entity.pojo.Reservations">
+        <id column="r_id" jdbcType="INTEGER" property="id"/>
+        <result column="r_student_id" jdbcType="INTEGER" property="studentId"/>
+        <result column="r_room_id" jdbcType="INTEGER" property="roomId"/>
+        <result column="r_seat_id" jdbcType="INTEGER" property="seatId"/>
+        <result column="r_start_time" jdbcType="TIMESTAMP" property="startTime"/>
+        <result column="r_end_time" jdbcType="TIMESTAMP" property="endTime"/>
+        <result column="r_status" jdbcType="VARCHAR" property="status"/>
+        <result column="r_check_in_time" jdbcType="TIMESTAMP" property="checkInTime"/>
+        <result column="r_check_out_time" jdbcType="TIMESTAMP" property="checkOutTime"/>
+        <result column="r_is_checked_in" jdbcType="INTEGER" property="isCheckedIn"/>
+        <result column="r_is_checked_out" jdbcType="INTEGER" property="isCheckedOut"/>
+        <association property="student" javaType="com.room.entity.pojo.Student">
+            <id column="s_id" jdbcType="INTEGER" property="id"/>
+            <result column="s_student_number" jdbcType="INTEGER" property="studentNumber"/>
+            <result column="s_student_name" jdbcType="VARCHAR" property="studentName"/>
+            <result column="s_gender" jdbcType="INTEGER" property="gender"/>
+            <result column="s_password" jdbcType="VARCHAR" property="password"/>
+            <result column="s_major_name" jdbcType="VARCHAR" property="majorName"/>
+        </association>
+        <association property="studyRooms" javaType="com.room.entity.pojo.StudyRooms">
+            <id column="sr_id" jdbcType="INTEGER" property="id"/>
+            <result column="sr_room_number" jdbcType="INTEGER" property="roomNumber"/>
+            <result column="sr_capacity" jdbcType="VARCHAR" property="capacity"/>
+            <result column="sr_location" jdbcType="VARCHAR" property="location"/>
+        </association>
+        <association property="seat" javaType="com.room.entity.pojo.Seat">
+            <id column="seat_id" jdbcType="INTEGER" property="id"/>
+            <result column="seat_number" jdbcType="VARCHAR" property="seatNumber"/>
+            <result column="seat_type" jdbcType="VARCHAR" property="seatType"/>
+        </association>
+    </resultMap>
+    <insert id="add">
+        insert into reservations (student_id, room_id, seat_id, start_time, end_time, status, is_checked_in, is_checked_out)
+        VALUE (#{studentId}, #{roomId}, #{seatId}, #{startTime}, #{endTime}, #{status}, 0, 0)
+    </insert>
+    <update id="update">
+        update reservations
+        <set>
+            <if test="studentId != null">
+                student_id = #{studentId},
+            </if>
+            <if test="roomId != null">
+                room_id = #{roomId},
+            </if>
+            <if test="seatId != null">
+                seat_id = #{seatId},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="checkInTime != null">
+                check_in_time = #{checkInTime},
+            </if>
+            <if test="checkOutTime != null">
+                check_out_time = #{checkOutTime},
+            </if>
+            <if test="isCheckedIn != null">
+                is_checked_in = #{isCheckedIn},
+            </if>
+            <if test="isCheckedOut != null">
+                is_checked_out = #{isCheckedOut},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="list" resultMap="BaseResultMap">
+        select
+            r.id as r_id,
+            r.student_id as r_student_id,
+            r.room_id as r_room_id,
+            r.seat_id as r_seat_id,
+            r.start_time as r_start_time,
+            r.end_time as r_end_time,
+            r.status as r_status,
+            r.check_in_time as r_check_in_time,
+            r.check_out_time as r_check_out_time,
+            r.is_checked_in as r_is_checked_in,
+            r.is_checked_out as r_is_checked_out,
+            s.id as s_id,
+            s.student_number as s_student_number,
+            s.student_name as s_student_name,
+            s.gender as s_gender,
+            s.password as s_password,
+            s.major_name as s_major_name,
+            sr.id as sr_id,
+            sr.room_number as sr_room_number,
+            sr.capacity as sr_capacity,
+            sr.location as sr_location,
+            seat.id as seat_id,
+            seat.seat_number as seat_number,
+            seat.seat_type as seat_type
+        from reservations r
+                 left join student s on s.id = r.student_id
+                 left join study_rooms sr on sr.id = r.room_id
+                 left join seat on seat.id = r.seat_id
+        <where>
+            <if test="studentNumber != null and studentNumber != ''">
+                and s.student_number = #{studentNumber}
+            </if>
+            <if test="studentName != null and studentName != ''">
+                and s.student_name like concat('%', #{studentName}, '%')
+            </if>
+            <if test="roomNumber != null and roomNumber != ''">
+                and sr.room_number like concat('%', #{roomNumber}, '%')
+            </if>
+            <if test="seatNumber != null and seatNumber != ''">
+                and seat.seat_number like concat('%', #{seatNumber}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and r.status = #{status}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                and DATE(r.start_time) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and DATE(r.end_time) &lt;= #{endDate}
+            </if>
+        </where>
+        order by r.start_time desc
+    </select>
+
+
+</mapper>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.room.mapper.FeedbackMapper">
+    <resultMap id="BaseResultMap" type="com.room.entity.pojo.Feedback">
+        <id column="f_id" jdbcType="INTEGER" property="id"/>
+        <result column="f_student_id" jdbcType="INTEGER" property="studentId"/>
+        <result column="f_type" jdbcType="INTEGER" property="type"/>
+        <result column="f_title" jdbcType="VARCHAR" property="title"/>
+        <result column="f_content" jdbcType="VARCHAR" property="content"/>
+        <result column="f_room_id" jdbcType="INTEGER" property="roomId"/>
+        <result column="f_seat_id" jdbcType="INTEGER" property="seatId"/>
+        <result column="f_status" jdbcType="INTEGER" property="status"/>
+        <result column="f_reply" jdbcType="VARCHAR" property="reply"/>
+        <result column="f_reply_admin_id" jdbcType="INTEGER" property="replyAdminId"/>
+        <result column="f_reply_time" jdbcType="TIMESTAMP" property="replyTime"/>
+        <result column="f_create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <association property="student" javaType="com.room.entity.pojo.Student">
+            <id column="s_id" jdbcType="INTEGER" property="id"/>
+            <result column="s_student_number" jdbcType="INTEGER" property="studentNumber"/>
+            <result column="s_student_name" jdbcType="VARCHAR" property="studentName"/>
+            <result column="s_major_name" jdbcType="VARCHAR" property="majorName"/>
+        </association>
+        <association property="studyRooms" javaType="com.room.entity.pojo.StudyRooms">
+            <id column="sr_id" jdbcType="INTEGER" property="id"/>
+            <result column="sr_room_number" jdbcType="VARCHAR" property="roomNumber"/>
+            <result column="sr_location" jdbcType="VARCHAR" property="location"/>
+        </association>
+        <association property="seat" javaType="com.room.entity.pojo.Seat">
+            <id column="seat_id" jdbcType="INTEGER" property="id"/>
+            <result column="seat_number" jdbcType="VARCHAR" property="seatNumber"/>
+        </association>
+    </resultMap>
+
+    <insert id="add">
+        insert into feedback (student_id, type, title, content, room_id, seat_id, status)
+        values (#{studentId}, #{type}, #{title}, #{content}, #{roomId}, #{seatId}, #{status})
+    </insert>
+
+    <update id="update">
+        update feedback
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="reply != null">
+                reply = #{reply},
+            </if>
+            <if test="replyAdminId != null">
+                reply_admin_id = #{replyAdminId},
+            </if>
+            <if test="replyTime != null">
+                reply_time = #{replyTime},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from feedback where id = #{id}
+    </delete>
+
+    <select id="getById" resultMap="BaseResultMap">
+        select
+            f.id as f_id,
+            f.student_id as f_student_id,
+            f.type as f_type,
+            f.title as f_title,
+            f.content as f_content,
+            f.room_id as f_room_id,
+            f.seat_id as f_seat_id,
+            f.status as f_status,
+            f.reply as f_reply,
+            f.reply_admin_id as f_reply_admin_id,
+            f.reply_time as f_reply_time,
+            f.create_time as f_create_time,
+            s.id as s_id,
+            s.student_number as s_student_number,
+            s.student_name as s_student_name,
+            s.major_name as s_major_name,
+            sr.id as sr_id,
+            sr.room_number as sr_room_number,
+            sr.location as sr_location,
+            seat.id as seat_id,
+            seat.seat_number as seat_number
+        from feedback f
+        left join student s on s.id = f.student_id
+        left join study_rooms sr on sr.id = f.room_id
+        left join seat on seat.id = f.seat_id
+        where f.id = #{id}
+    </select>
+
+    <select id="list" resultMap="BaseResultMap">
+        select
+            f.id as f_id,
+            f.student_id as f_student_id,
+            f.type as f_type,
+            f.title as f_title,
+            f.content as f_content,
+            f.room_id as f_room_id,
+            f.seat_id as f_seat_id,
+            f.status as f_status,
+            f.reply as f_reply,
+            f.reply_admin_id as f_reply_admin_id,
+            f.reply_time as f_reply_time,
+            f.create_time as f_create_time,
+            s.id as s_id,
+            s.student_number as s_student_number,
+            s.student_name as s_student_name,
+            s.major_name as s_major_name,
+            sr.id as sr_id,
+            sr.room_number as sr_room_number,
+            sr.location as sr_location,
+            seat.id as seat_id,
+            seat.seat_number as seat_number
+        from feedback f
+        left join student s on s.id = f.student_id
+        left join study_rooms sr on sr.id = f.room_id
+        left join seat on seat.id = f.seat_id
+        <where>
+            <if test="studentNumber != null">
+                and s.student_number = #{studentNumber}
+            </if>
+            <if test="type != null">
+                and f.type = #{type}
+            </if>
+            <if test="status != null">
+                and f.status = #{status}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                and DATE(f.create_time) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and DATE(f.create_time) &lt;= #{endDate}
+            </if>
+        </where>
+        order by f.create_time desc
+    </select>
+
+    <select id="getByStudentId" resultMap="BaseResultMap">
+        select
+            f.id as f_id,
+            f.student_id as f_student_id,
+            f.type as f_type,
+            f.title as f_title,
+            f.content as f_content,
+            f.room_id as f_room_id,
+            f.seat_id as f_seat_id,
+            f.status as f_status,
+            f.reply as f_reply,
+            f.reply_admin_id as f_reply_admin_id,
+            f.reply_time as f_reply_time,
+            f.create_time as f_create_time,
+            sr.id as sr_id,
+            sr.room_number as sr_room_number,
+            sr.location as sr_location,
+            seat.id as seat_id,
+            seat.seat_number as seat_number
+        from feedback f
+        left join study_rooms sr on sr.id = f.room_id
+        left join seat on seat.id = f.seat_id
+        where f.student_id = #{studentId}
+        order by f.create_time desc
+    </select>
+</mapper>

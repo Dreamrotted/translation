@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.room.mapper.BlacklistMapper">
+    <resultMap id="BaseResultMap" type="com.room.entity.pojo.Blacklist">
+        <id column="b_id" jdbcType="INTEGER" property="id"/>
+        <result column="b_student_id" jdbcType="INTEGER" property="studentId"/>
+        <result column="b_reason" jdbcType="VARCHAR" property="reason"/>
+        <result column="b_start_time" jdbcType="TIMESTAMP" property="startTime"/>
+        <result column="b_end_time" jdbcType="TIMESTAMP" property="endTime"/>
+        <result column="b_add_type" jdbcType="INTEGER" property="addType"/>
+        <result column="b_admin_id" jdbcType="INTEGER" property="adminId"/>
+        <result column="b_status" jdbcType="INTEGER" property="status"/>
+        <association property="student" javaType="com.room.entity.pojo.Student">
+            <id column="s_id" jdbcType="INTEGER" property="id"/>
+            <result column="s_student_number" jdbcType="INTEGER" property="studentNumber"/>
+            <result column="s_student_name" jdbcType="VARCHAR" property="studentName"/>
+            <result column="s_major_name" jdbcType="VARCHAR" property="majorName"/>
+        </association>
+    </resultMap>
+
+    <insert id="add">
+        insert into blacklist (student_id, reason, start_time, end_time, add_type, admin_id, status)
+        values (#{studentId}, #{reason}, #{startTime}, #{endTime}, #{addType}, #{adminId}, #{status})
+    </insert>
+
+    <update id="update">
+        update blacklist
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="reason != null">
+                reason = #{reason},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from blacklist where id = #{id}
+    </delete>
+
+    <select id="list" resultMap="BaseResultMap">
+        select
+            b.id as b_id,
+            b.student_id as b_student_id,
+            b.reason as b_reason,
+            b.start_time as b_start_time,
+            b.end_time as b_end_time,
+            b.add_type as b_add_type,
+            b.admin_id as b_admin_id,
+            b.status as b_status,
+            s.id as s_id,
+            s.student_number as s_student_number,
+            s.student_name as s_student_name,
+            s.major_name as s_major_name
+        from blacklist b
+        left join student s on s.id = b.student_id
+        <where>
+            <if test="studentNumber != null">
+                and s.student_number = #{studentNumber}
+            </if>
+            <if test="status != null">
+                and b.status = #{status}
+            </if>
+        </where>
+        order by b.start_time desc
+    </select>
+</mapper>

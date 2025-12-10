@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.room.mapper.ViolationRecordMapper">
+    <resultMap id="BaseResultMap" type="com.room.entity.pojo.ViolationRecord">
+        <id column="v_id" jdbcType="INTEGER" property="id"/>
+        <result column="v_student_id" jdbcType="INTEGER" property="studentId"/>
+        <result column="v_reservation_id" jdbcType="INTEGER" property="reservationId"/>
+        <result column="v_violation_type" jdbcType="VARCHAR" property="violationType"/>
+        <result column="v_violation_desc" jdbcType="VARCHAR" property="violationDesc"/>
+        <result column="v_violation_time" jdbcType="TIMESTAMP" property="violationTime"/>
+        <result column="v_record_type" jdbcType="INTEGER" property="recordType"/>
+        <result column="v_admin_id" jdbcType="INTEGER" property="adminId"/>
+        <result column="v_status" jdbcType="INTEGER" property="status"/>
+        <association property="student" javaType="com.room.entity.pojo.Student">
+            <id column="s_id" jdbcType="INTEGER" property="id"/>
+            <result column="s_student_number" jdbcType="INTEGER" property="studentNumber"/>
+            <result column="s_student_name" jdbcType="VARCHAR" property="studentName"/>
+            <result column="s_major_name" jdbcType="VARCHAR" property="majorName"/>
+        </association>
+    </resultMap>
+
+    <insert id="add">
+        insert into violation_record (student_id, reservation_id, violation_type, violation_desc, violation_time, record_type, admin_id, status)
+        values (#{studentId}, #{reservationId}, #{violationType}, #{violationDesc}, #{violationTime}, #{recordType}, #{adminId}, #{status})
+    </insert>
+
+    <update id="update">
+        update violation_record
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="violationDesc != null">
+                violation_desc = #{violationDesc},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from violation_record where id = #{id}
+    </delete>
+
+    <select id="list" resultMap="BaseResultMap">
+        select
+            v.id as v_id,
+            v.student_id as v_student_id,
+            v.reservation_id as v_reservation_id,
+            v.violation_type as v_violation_type,
+            v.violation_desc as v_violation_desc,
+            v.violation_time as v_violation_time,
+            v.record_type as v_record_type,
+            v.admin_id as v_admin_id,
+            v.status as v_status,
+            s.id as s_id,
+            s.student_number as s_student_number,
+            s.student_name as s_student_name,
+            s.major_name as s_major_name
+        from violation_record v
+        left join student s on s.id = v.student_id
+        <where>
+            <if test="studentNumber != null">
+                and s.student_number = #{studentNumber}
+            </if>
+            <if test="violationType != null and violationType != ''">
+                and v.violation_type = #{violationType}
+            </if>
+            <if test="recordType != null">
+                and v.record_type = #{recordType}
+            </if>
+            <if test="status != null">
+                and v.status = #{status}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                and DATE(v.violation_time) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and DATE(v.violation_time) &lt;= #{endDate}
+            </if>
+        </where>
+        order by v.violation_time desc
+    </select>
+</mapper>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.room.mapper.SeatMapper">
+
+    <resultMap id="SeatResultMap" type="com.room.entity.pojo.Seat">
+        <id property="id" column="id"/>
+        <result property="roomId" column="room_id"/>
+        <result property="seatNumber" column="seat_number"/>
+        <result property="seatType" column="seat_type"/>
+        <result property="status" column="status"/>
+        <association property="studyRooms" javaType="com.room.entity.pojo.StudyRooms">
+            <id property="id" column="room_id"/>
+            <result property="roomNumber" column="room_number"/>
+            <result property="location" column="location"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询座位列表 -->
+    <select id="list" resultMap="SeatResultMap">
+        select s.*, sr.room_number, sr.location
+        from seat s
+        left join study_rooms sr on s.room_id = sr.id
+        <where>
+            <if test="roomId != null">
+                and s.room_id = #{roomId}
+            </if>
+            <if test="seatNumber != null and seatNumber != ''">
+                and s.seat_number like concat('%', #{seatNumber}, '%')
+            </if>
+        </where>
+        order by s.room_id, s.seat_number
+    </select>
+
+    <!-- 批量添加座位 -->
+    <insert id="batchAdd" parameterType="java.util.List">
+        insert into seat (room_id, seat_number, seat_type, status)
+        values
+        <foreach collection="seats" item="seat" separator=",">
+            (#{seat.roomId}, #{seat.seatNumber}, #{seat.seatType}, #{seat.status})
+        </foreach>
+    </insert>
+
+    <!-- 更新座位 -->
+    <update id="update">
+        update seat
+        <set>
+            <if test="seatNumber != null">
+                seat_number = #{seatNumber},
+            </if>
+            <if test="seatType != null">
+                seat_type = #{seatType},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- 查询可用座位（排除已预约的座位） -->
+    <select id="getAvailableSeats" resultMap="SeatResultMap">
+        select s.*, sr.room_number, sr.location
+        from seat s
+        left join study_rooms sr on s.room_id = sr.id
+        where s.room_id = #{roomId}
+        and s.status = 0
+        <if test="seatType != null and seatType != ''">
+            and s.seat_type = #{seatType}
+        </if>
+        and s.id not in (
+            select seat_id from reservations
+            where seat_id is not null
+            and status = '已预约'
+            and (
+                (start_time &lt;= #{startTime} and end_time &gt; #{startTime})
+                or (start_time &lt; #{endTime} and end_time &gt;= #{endTime})
+                or (start_time &gt;= #{startTime} and end_time &lt;= #{endTime})
+            )
+        )
+        order by s.seat_number
+    </select>
+
+</mapper>
