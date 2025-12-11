@@ -1,6 +1,17 @@
-<!--管理员数据分析与可视化-->
+<!--管理员数据分析与可视化 - 纯静态演示版-->
 <template>
   <div class="dashboard-container">
+    <!-- 演示提示 -->
+    <div class="demo-notice">
+      <el-alert
+          title="📊 纯静态数据演示页面"
+          type="info"
+          description="这是一个完全静态的演示页面，所有数据均为模拟数据，不连接任何后端服务器。图表和按钮仅用于界面展示。"
+          show-icon
+          :closable="false"
+      ></el-alert>
+    </div>
+
     <!-- 实时概览数据卡片 -->
     <el-row :gutter="20" class="overview-cards">
       <el-col :xs="12" :sm="6">
@@ -8,10 +19,11 @@
           <div class="card-content">
             <i class="el-icon-s-home card-icon" style="color: #409EFF;"></i>
             <div class="card-info">
-              <div class="card-value">{{ overview.totalSeats }}</div>
+              <div class="card-value">480</div>
               <div class="card-label">总座位数</div>
             </div>
           </div>
+          <div class="card-tip">模拟数据</div>
         </el-card>
       </el-col>
       <el-col :xs="12" :sm="6">
@@ -19,10 +31,11 @@
           <div class="card-content">
             <i class="el-icon-user card-icon" style="color: #67C23A;"></i>
             <div class="card-info">
-              <div class="card-value">{{ overview.occupiedSeats }}</div>
+              <div class="card-value">326</div>
               <div class="card-label">使用中座位</div>
             </div>
           </div>
+          <div class="card-tip">模拟数据</div>
         </el-card>
       </el-col>
       <el-col :xs="12" :sm="6">
@@ -30,10 +43,11 @@
           <div class="card-content">
             <i class="el-icon-pie-chart card-icon" style="color: #E6A23C;"></i>
             <div class="card-info">
-              <div class="card-value">{{ overview.usageRate }}%</div>
+              <div class="card-value">67.9%</div>
               <div class="card-label">总使用率</div>
             </div>
           </div>
+          <div class="card-tip">模拟数据</div>
         </el-card>
       </el-col>
       <el-col :xs="12" :sm="6">
@@ -41,10 +55,11 @@
           <div class="card-content">
             <i class="el-icon-warning card-icon" style="color: #F56C6C;"></i>
             <div class="card-info">
-              <div class="card-value">{{ overview.todayViolations }}</div>
+              <div class="card-value">8</div>
               <div class="card-label">今日违规次数</div>
             </div>
           </div>
+          <div class="card-tip">模拟数据</div>
         </el-card>
       </el-col>
     </el-row>
@@ -53,7 +68,8 @@
     <el-card class="chart-card">
       <div slot="header" class="card-header">
         <span>各自习室实时人数</span>
-        <span class="update-time">更新时间: {{ realTimeData.updateTime }}</span>
+        <span class="update-time">更新时间: {{ currentTime }}</span>
+        <el-button type="text" @click="refreshDemoData" size="small">刷新演示数据</el-button>
       </div>
       <el-table :data="realTimeData.rooms" stripe border max-height="300">
         <el-table-column prop="roomNumber" label="自习室编号" align="center" width="150"></el-table-column>
@@ -75,6 +91,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <div class="demo-hint">点击"刷新演示数据"按钮可随机生成新的模拟数据</div>
     </el-card>
 
     <!-- 图表区域 -->
@@ -93,11 +110,19 @@
                   end-placeholder="结束日期"
                   value-format="yyyy-MM-dd"
                   size="small"
-                  @change="getRoomUsageComparison">
+                  @change="showDateChangeDemo('对比图日期已更新')">
               </el-date-picker>
             </div>
           </div>
-          <div id="roomComparisonChart" style="width: 100%; height: 400px;"></div>
+          <div id="roomComparisonChart" style="width: 100%; height: 400px;">
+            <div class="demo-chart-placeholder">
+              <i class="el-icon-data-analysis" style="font-size: 60px; color: #909399; margin-bottom: 20px;"></i>
+              <h3>柱状图演示区域</h3>
+              <p>选择日期范围可查看模拟数据变化</p>
+              <el-button type="primary" @click="generateDemoChartData" size="small">生成演示数据</el-button>
+            </div>
+          </div>
+          <div class="chart-tip">此为静态图表演示区域，数据随机生成</div>
         </el-card>
       </el-col>
 
@@ -107,7 +132,7 @@
           <div slot="header" class="card-header">
             <span>时段使用率趋势</span>
             <div class="controls-wrapper">
-              <el-select v-model="selectedRoomId" placeholder="选择自习室" size="small" @change="getRoomHourlyTrend" style="width: 150px; margin-right: 10px;">
+              <el-select v-model="selectedRoomId" placeholder="选择自习室" size="small" @change="showSelectChangeDemo" style="width: 150px; margin-right: 10px;">
                 <el-option v-for="room in roomList" :key="room.id" :label="room.roomNumber" :value="room.id"></el-option>
               </el-select>
               <el-date-picker
@@ -116,200 +141,268 @@
                   placeholder="选择日期"
                   value-format="yyyy-MM-dd"
                   size="small"
-                  @change="getRoomHourlyTrend">
+                  @change="showDateChangeDemo('趋势图日期已更新')">
               </el-date-picker>
             </div>
           </div>
-          <div id="hourlyTrendChart" style="width: 100%; height: 400px;"></div>
+          <div id="hourlyTrendChart" style="width: 100%; height: 400px;">
+            <div class="demo-chart-placeholder">
+              <i class="el-icon-trend-charts" style="font-size: 60px; color: #909399; margin-bottom: 20px;"></i>
+              <h3>折线图演示区域</h3>
+              <p>选择自习室和日期可查看模拟趋势</p>
+              <el-button type="success" @click="generateDemoTrendData" size="small">生成趋势数据</el-button>
+            </div>
+          </div>
+          <div class="chart-tip">此为静态图表演示区域，数据随机生成</div>
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 演示操作面板 -->
+    <el-card class="demo-controls">
+      <div slot="header">
+        <span>演示控制面板</span>
+      </div>
+      <div class="controls-content">
+        <el-button type="primary" @click="showAllData">查看所有数据</el-button>
+        <el-button type="success" @click="exportDemoData">导出演示数据</el-button>
+        <el-button type="warning" @click="resetDemoData">重置演示</el-button>
+        <el-button type="info" @click="showHelp">查看帮助</el-button>
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script>
-import request from "@/utils/request";
-import * as echarts from 'echarts';
-
 export default {
   data() {
+    // 模拟自习室列表
+    const mockRoomList = [
+      { id: 1, roomNumber: '101', location: 'A栋1楼' },
+      { id: 2, roomNumber: '102', location: 'A栋1楼' },
+      { id: 3, roomNumber: '201', location: 'B栋2楼' },
+      { id: 4, roomNumber: '202', location: 'B栋2楼' },
+      { id: 5, roomNumber: '301', location: 'C栋3楼' },
+      { id: 6, roomNumber: '302', location: 'C栋3楼' }
+    ];
+
+    // 生成模拟实时数据
+    const generateRealTimeData = () => {
+      return mockRoomList.map(room => {
+        const totalSeats = Math.floor(Math.random() * 80) + 40; // 40-120个座位
+        const occupiedSeats = Math.floor(Math.random() * totalSeats * 0.8) + Math.floor(totalSeats * 0.2); // 20%-100%
+        const usageRate = ((occupiedSeats / totalSeats) * 100).toFixed(1);
+
+        return {
+          ...room,
+          totalSeats,
+          occupiedSeats,
+          availableSeats: totalSeats - occupiedSeats,
+          usageRate
+        };
+      });
+    };
+
     return {
-      overview: {
-        totalSeats: 0,
-        occupiedSeats: 0,
-        usageRate: 0,
-        todayViolations: 0,
-        todayReservations: 0,
-        todayCompleted: 0
-      },
+      // 当前时间（用于演示）
+      currentTime: new Date().toLocaleTimeString(),
+
+      // 模拟数据
+      roomList: mockRoomList,
       realTimeData: {
-        rooms: [],
-        updateTime: ''
+        rooms: generateRealTimeData(),
+        updateTime: new Date().toLocaleString()
       },
+
+      // 演示控件
       comparisonDateRange: null,
-      selectedRoomId: null,
-      trendDate: null,
-      roomList: [],
-      roomComparisonChart: null,
-      hourlyTrendChart: null,
+      selectedRoomId: mockRoomList[0]?.id,
+      trendDate: new Date().toISOString().split('T')[0],
+
+      // 自动刷新计时器
       autoRefreshTimer: null
     };
   },
+
   methods: {
-    // 获取实时概览数据
-    getOverview() {
-      request.get('/statistics/overview').then(resp => {
-        if (resp.code === 200) {
-          this.overview = resp.data;
-        }
+    // 显示日期选择器更改演示
+    showDateChangeDemo(message) {
+      this.$message({
+        message: `演示: ${message}`,
+        type: 'info',
+        duration: 1500
       });
     },
 
-    // 获取各自习室实时人数
-    getRealTimeOccupancy() {
-      request.get('/statistics/realTimeOccupancy').then(resp => {
-        if (resp.code === 200) {
-          this.realTimeData = resp.data;
-        }
+    // 显示下拉框选择演示
+    showSelectChangeDemo() {
+      this.$message({
+        message: '演示: 自习室选择已更新',
+        type: 'info',
+        duration: 1500
       });
     },
 
-    // 获取自习室使用率对比
-    getRoomUsageComparison() {
-      const params = {};
-      if (this.comparisonDateRange && this.comparisonDateRange.length === 2) {
-        params.startDate = this.comparisonDateRange[0];
-        params.endDate = this.comparisonDateRange[1];
-      }
+    // 刷新演示数据
+    refreshDemoData() {
+      // 更新当前时间
+      this.currentTime = new Date().toLocaleTimeString();
 
-      request.get('/statistics/roomUsageComparison', {params}).then(resp => {
-        if (resp.code === 200) {
-          this.renderRoomComparisonChart(resp.data);
-        }
-      });
-    },
+      // 重新生成模拟数据
+      this.realTimeData = {
+        rooms: this.roomList.map(room => {
+          const totalSeats = Math.floor(Math.random() * 80) + 40;
+          const occupiedSeats = Math.floor(Math.random() * totalSeats * 0.8) + Math.floor(totalSeats * 0.2);
+          const usageRate = ((occupiedSeats / totalSeats) * 100).toFixed(1);
 
-    // 获取时段使用率趋势
-    getRoomHourlyTrend() {
-      if (!this.selectedRoomId) {
-        return;
-      }
-
-      const params = {roomId: this.selectedRoomId};
-      if (this.trendDate) {
-        params.date = this.trendDate;
-      }
-
-      request.get('/statistics/roomHourlyTrend', {params}).then(resp => {
-        if (resp.code === 200) {
-          this.renderHourlyTrendChart(resp.data);
-        }
-      });
-    },
-
-    // 渲染柱状图
-    renderRoomComparisonChart(data) {
-      if (!this.roomComparisonChart) {
-        this.roomComparisonChart = echarts.init(document.getElementById('roomComparisonChart'));
-      }
-
-      const option = {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
-          },
-          formatter: '{b}<br/>使用率: {c}%'
-        },
-        xAxis: {
-          type: 'category',
-          data: data.roomNames,
-          axisLabel: {
-            rotate: 45,
-            interval: 0
-          }
-        },
-        yAxis: {
-          type: 'value',
-          name: '使用率(%)',
-          max: 100
-        },
-        series: [{
-          name: '使用率',
-          type: 'bar',
-          data: data.usageRates,
-          itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {offset: 0, color: '#83bff6'},
-              {offset: 0.5, color: '#188df0'},
-              {offset: 1, color: '#188df0'}
-            ])
-          },
-          label: {
-            show: true,
-            position: 'top',
-            formatter: '{c}%'
-          }
-        }]
+          return {
+            ...room,
+            totalSeats,
+            occupiedSeats,
+            availableSeats: totalSeats - occupiedSeats,
+            usageRate
+          };
+        }),
+        updateTime: new Date().toLocaleString()
       };
 
-      this.roomComparisonChart.setOption(option);
+      this.$message({
+        message: '演示数据已刷新',
+        type: 'success',
+        duration: 1500
+      });
     },
 
-    // 渲染折线图
-    renderHourlyTrendChart(data) {
-      if (!this.hourlyTrendChart) {
-        this.hourlyTrendChart = echarts.init(document.getElementById('hourlyTrendChart'));
-      }
+    // 生成演示图表数据
+    generateDemoChartData() {
+      this.$message({
+        message: '正在生成柱状图演示数据...',
+        type: 'info',
+        duration: 1000
+      });
 
-      const option = {
-        tooltip: {
-          trigger: 'axis',
-          formatter: '{b}<br/>使用率: {c}%'
-        },
-        xAxis: {
-          type: 'category',
-          data: data.hours,
-          boundaryGap: false
-        },
-        yAxis: {
-          type: 'value',
-          name: '使用率(%)',
-          max: 100
-        },
-        series: [{
-          name: '使用率',
-          type: 'line',
-          data: data.usageRates,
-          smooth: true,
-          itemStyle: {
-            color: '#67C23A'
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {offset: 0, color: 'rgba(103, 194, 58, 0.3)'},
-              {offset: 1, color: 'rgba(103, 194, 58, 0.1)'}
-            ])
-          },
-          label: {
-            show: false
-          }
-        }]
+      // 模拟延迟效果
+      setTimeout(() => {
+        this.$message({
+          message: '柱状图演示数据已生成',
+          type: 'success',
+          duration: 1500
+        });
+      }, 800);
+    },
+
+    // 生成演示趋势数据
+    generateDemoTrendData() {
+      this.$message({
+        message: '正在生成折线图演示数据...',
+        type: 'info',
+        duration: 1000
+      });
+
+      // 模拟延迟效果
+      setTimeout(() => {
+        this.$message({
+          message: '折线图演示数据已生成',
+          type: 'success',
+          duration: 1500
+        });
+      }, 800);
+    },
+
+    // 查看所有数据
+    showAllData() {
+      this.$alert(`
+        <div style="max-height: 400px; overflow-y: auto;">
+          <h4>当前演示数据概览</h4>
+          <p><strong>自习室数量：</strong>${this.roomList.length}个</p>
+          <p><strong>总座位数模拟：</strong>480个</p>
+          <p><strong>使用率模拟：</strong>67.9%</p>
+          <hr>
+          <p><em>注意：所有数据均为前端生成的随机数据，仅用于界面演示。</em></p>
+        </div>
+      `, '演示数据概览', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '确定'
+      });
+    },
+
+    // 导出演示数据
+    exportDemoData() {
+      const demoData = {
+        title: '自习室管理演示数据',
+        exportTime: new Date().toLocaleString(),
+        rooms: this.realTimeData.rooms,
+        totalStats: {
+          totalSeats: 480,
+          occupiedSeats: 326,
+          usageRate: '67.9%'
+        }
       };
 
-      this.hourlyTrendChart.setOption(option);
+      const dataStr = JSON.stringify(demoData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+      this.$message({
+        message: '演示数据已准备导出',
+        type: 'success',
+        duration: 2000
+      });
+
+      // 提示用户下载
+      setTimeout(() => {
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', 'demo-data.json');
+        linkElement.click();
+      }, 500);
     },
 
-    // 获取自习室列表
-    getRoomList() {
-      request.get('/studyRooms/list').then(resp => {
-        if (resp.code === 200) {
-          this.roomList = resp.data;
-          if (this.roomList.length > 0) {
-            this.selectedRoomId = this.roomList[0].id;
-            this.getRoomHourlyTrend();
-          }
-        }
+    // 重置演示数据
+    resetDemoData() {
+      this.$confirm('确定要重置所有演示数据吗？', '重置演示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.refreshDemoData();
+        this.comparisonDateRange = null;
+        this.selectedRoomId = this.roomList[0]?.id;
+        this.trendDate = new Date().toISOString().split('T')[0];
+
+        this.$message({
+          message: '演示数据已重置',
+          type: 'success'
+        });
+      });
+    },
+
+    // 显示帮助
+    showHelp() {
+      this.$alert(`
+        <div style="line-height: 1.6;">
+          <h4>📊 纯静态演示页面使用说明</h4>
+          <p><strong>功能说明：</strong></p>
+          <ul>
+            <li>这是一个完全静态的数据分析演示页面</li>
+            <li>所有数据均为前端随机生成的模拟数据</li>
+            <li>不连接任何后端服务器或数据库</li>
+            <li>所有按钮操作仅用于界面交互演示</li>
+          </ul>
+
+          <p><strong>可用操作：</strong></p>
+          <ul>
+            <li><strong>刷新演示数据：</strong>随机生成新的自习室使用数据</li>
+            <li><strong>日期选择器：</strong>体验日期选择的交互效果</li>
+            <li><strong>自习室选择：</strong>体验下拉选择的交互效果</li>
+            <li><strong>控制面板按钮：</strong>体验不同类型按钮的交互</li>
+          </ul>
+
+          <p><em>注意：此页面仅用于演示界面效果，所有数据操作不会持久保存。</em></p>
+        </div>
+      `, '演示页面帮助', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '我知道了',
+        customClass: 'help-dialog'
       });
     },
 
@@ -322,66 +415,41 @@ export default {
       return '#67C23A';
     },
 
-    // 刷新所有数据
-    refreshAllData() {
-      this.getOverview();
-      this.getRealTimeOccupancy();
-      this.getRoomUsageComparison();
-      if (this.selectedRoomId) {
-        this.getRoomHourlyTrend();
-      }
-    },
-
-    // 启动自动刷新
-    startAutoRefresh() {
-      // 每10秒刷新一次
+    // 启动时间更新
+    startTimeUpdate() {
       this.autoRefreshTimer = setInterval(() => {
-        this.refreshAllData();
-      }, 10000);
+        this.currentTime = new Date().toLocaleTimeString();
+      }, 1000); // 每秒更新一次时间
     },
 
-    // 停止自动刷新
-    stopAutoRefresh() {
+    // 停止时间更新
+    stopTimeUpdate() {
       if (this.autoRefreshTimer) {
         clearInterval(this.autoRefreshTimer);
-        this.autoRefreshTimer = null;
       }
     }
   },
+
   mounted() {
-    // 初始化数据
-    this.getOverview();
-    this.getRealTimeOccupancy();
-    this.getRoomUsageComparison();
-    this.getRoomList();
+    // 启动时间更新
+    this.startTimeUpdate();
 
-    // 启动自动刷新
-    this.startAutoRefresh();
+    // 设置初始数据
+    this.refreshDemoData();
 
-    // 窗口大小改变时重新渲染图表
-    window.addEventListener('resize', () => {
-      if (this.roomComparisonChart) {
-        this.roomComparisonChart.resize();
-      }
-      if (this.hourlyTrendChart) {
-        this.hourlyTrendChart.resize();
-      }
-    });
+    // 模拟加载效果
+    setTimeout(() => {
+      this.$message({
+        message: '演示数据加载完成',
+        type: 'success',
+        duration: 2000
+      });
+    }, 1000);
   },
+
   beforeDestroy() {
-    // 停止自动刷新
-    this.stopAutoRefresh();
-
-    // 销毁图表实例
-    if (this.roomComparisonChart) {
-      this.roomComparisonChart.dispose();
-    }
-    if (this.hourlyTrendChart) {
-      this.hourlyTrendChart.dispose();
-    }
-
-    // 移除窗口大小监听
-    window.removeEventListener('resize', () => {});
+    // 清理计时器
+    this.stopTimeUpdate();
   }
 }
 </script>
@@ -390,6 +458,11 @@ export default {
 .dashboard-container {
   padding: 20px;
   background-color: #f0f2f5;
+  min-height: 100vh;
+}
+
+.demo-notice {
+  margin-bottom: 20px;
 }
 
 .overview-cards {
@@ -400,6 +473,7 @@ export default {
   margin-bottom: 20px;
   cursor: pointer;
   transition: all 0.3s;
+  position: relative;
 }
 
 .data-card:hover {
@@ -435,8 +509,20 @@ export default {
   color: #909399;
 }
 
+.card-tip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 12px;
+  color: #909399;
+  background-color: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
 .chart-card {
   margin-bottom: 20px;
+  position: relative;
 }
 
 .card-header {
@@ -459,6 +545,59 @@ export default {
 
 .charts-row {
   margin-top: 20px;
+}
+
+.demo-hint {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
+}
+
+.chart-tip {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 12px;
+  color: #909399;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.demo-chart-placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 4px;
+  color: #606266;
+}
+
+.demo-chart-placeholder h3 {
+  margin: 10px 0;
+  color: #303133;
+}
+
+.demo-chart-placeholder p {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.demo-controls {
+  margin-top: 30px;
+}
+
+.controls-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
 /* 响应式布局 */
@@ -484,5 +623,24 @@ export default {
   .date-picker-wrapper, .controls-wrapper {
     margin-top: 10px;
   }
+
+  .controls-content {
+    flex-direction: column;
+  }
+
+  .controls-content .el-button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.data-card, .chart-card, .demo-controls {
+  animation: fadeIn 0.5s ease-out;
 }
 </style>

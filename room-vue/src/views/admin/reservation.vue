@@ -129,7 +129,7 @@ export default {
         pageNum: this.current,
         pageSize: this.pageSize,
       };
-      
+
       // 添加查询条件
       if (this.query.studentNumber) {
         params.studentNumber = this.query.studentNumber;
@@ -150,7 +150,7 @@ export default {
         params.startDate = this.query.dateRange[0];
         params.endDate = this.query.dateRange[1];
       }
-      
+
       request.get('/reservation/page', { params }).then((resp) => {
         if (resp.code === 200) {
           this.dataList = resp.data.list;

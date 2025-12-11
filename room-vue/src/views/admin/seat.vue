@@ -168,14 +168,14 @@ export default {
       pageSize: 10,
       totalPage: 0,
       dataListLoading: false,
-      
+
       searchForm: {
         roomId: null,
         seatNumber: ''
       },
-      
+
       roomList: [], // 自习室列表
-      
+
       dialogVisible: false,
       dialogTitle: '',
       form: {
@@ -191,7 +191,7 @@ export default {
         seatType: [{required: true, message: '请选择座位类型', trigger: 'change'}],
         status: [{required: true, message: '请选择状态', trigger: 'change'}]
       },
-      
+
       batchDialogVisible: false,
       batchForm: {
         roomId: null,
@@ -227,7 +227,7 @@ export default {
         this.dataListLoading = false;
       });
     },
-    
+
     // 获取自习室列表
     getRoomList() {
       request.get('studyRooms/page', {
@@ -241,7 +241,7 @@ export default {
         }
       });
     },
-    
+
     // 重置搜索
     resetSearch() {
       this.searchForm = {
@@ -251,21 +251,21 @@ export default {
       this.current = 1;
       this.getDataList();
     },
-    
+
     // 新增
     handleAdd() {
       this.dialogTitle = '新增座位';
       this.dialogVisible = true;
       this.resetForm();
     },
-    
+
     // 编辑
     handleEdit(row) {
       this.dialogTitle = '编辑座位';
       this.dialogVisible = true;
       this.form = {...row};
     },
-    
+
     // 删除
     handleDelete(id) {
       this.$confirm('此操作将永久删除该座位, 是否继续?', '提示', {
@@ -288,7 +288,7 @@ export default {
         });
       });
     },
-    
+
     // 提交表单
     submitForm() {
       this.$refs.form.validate(valid => {
@@ -319,13 +319,13 @@ export default {
         }
       });
     },
-    
+
     // 批量生成
     handleBatchGenerate() {
       this.batchDialogVisible = true;
       this.resetBatchForm();
     },
-    
+
     // 提交批量生成
     submitBatchForm() {
       this.$refs.batchForm.validate(valid => {
@@ -342,7 +342,7 @@ export default {
         }
       });
     },
-    
+
     // 重置表单
     resetForm() {
       this.form = {
@@ -353,7 +353,7 @@ export default {
         status: 0
       };
     },
-    
+
     // 重置批量生成表单
     resetBatchForm() {
       this.batchForm = {
@@ -363,14 +363,14 @@ export default {
         seatType: '普通座位'
       };
     },
-    
+
     // 分页大小变化
     sizeChangeHandle(val) {
       this.pageSize = val;
       this.current = 1;
       this.getDataList();
     },
-    
+
     // 当前页码变化
     currentChangeHandle(val) {
       this.current = val;
